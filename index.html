@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Gerador de Script de OS</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{
     --bg:#12181a;
@@ -537,6 +541,12 @@ document.querySelectorAll('input, textarea, select').forEach(el=>{
 });
 
 render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
 </script>
 
 <button id="mobileCopy" onclick="copyOutput()" style="position:fixed;left:12px;right:12px;bottom:12px;height:58px;border:none;border-radius:16px;background:#00c2a8;font-weight:bold;z-index:999">COPIAR SCRIPT</button></body>
