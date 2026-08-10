@@ -8,9 +8,6 @@
 <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Script OS">
 <style>
   :root{
     --bg:#12181a;
@@ -93,6 +90,42 @@
   .app-row label{display:flex; align-items:center; gap:6px; margin:0; font-size:12.5px; color:var(--text);}
   .app-row input{width:auto;}
 
+  .equipe-toggle{
+    max-width:none; width:100%; margin:0; display:flex; gap:0;
+    border-left:1px solid var(--line); border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .equipe-opt{
+    flex:1; text-align:center; padding:13px 10px; font-size:12.5px; font-weight:700;
+    letter-spacing:.04em; text-transform:uppercase; cursor:pointer; color:var(--text-dim);
+    background:var(--panel); border-right:1px solid var(--line); user-select:none;
+  }
+  .equipe-opt:last-child{border-right:none;}
+  .equipe-opt input{display:none;}
+  .equipe-opt.active{ color:#04211d; background:var(--teal); }
+
+  .toggle-row{
+    display:flex; flex-direction:column; align-items:stretch; padding:6px 0;
+    border-bottom:1px dashed var(--line);
+  }
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-row > label{
+    display:flex; align-items:center; gap:8px; margin:0; font-size:13px; color:var(--text);
+  }
+  .toggle-row > label input{width:auto;}
+  .sub-options{
+    display:none; margin-top:8px; padding-left:24px; flex-wrap:wrap; gap:8px 16px;
+  }
+  .sub-options label{
+    display:flex; align-items:center; gap:6px; margin:0; font-size:12.5px; color:var(--text-dim);
+  }
+  .sub-options input{width:auto;}
+
+  .dbm-slider-wrap{margin-top:6px;}
+  .dbm-slider-wrap .dbm-value{
+    text-align:center; font-size:22px; font-weight:700; color:var(--teal); margin-bottom:8px;
+  }
+
   .previewcol{display:none;/*hidden on mobile*/
     padding:20px 20px 24px; display:flex; flex-direction:column; background:#0e1315;
   }
@@ -127,9 +160,19 @@
   <span>selecione a categoria → preencha só o que muda → copie o script e pronto | Desenvolvido por: Monique Oliveira</span>
 </div>
 
+<div class="equipe-toggle" id="equipeToggle">
+  <label class="equipe-opt active" data-equipe="padrao">
+    <input type="radio" name="equipe" value="padrao" checked> Equipe Padrão
+  </label>
+  <label class="equipe-opt" data-equipe="fusao">
+    <input type="radio" name="equipe" value="fusao"> Equipe Fusão
+  </label>
+</div>
+
 <div class="layout" id="layout">
   <div class="formcol">
 
+<div id="formPadrao">
 
     <div class="section">
       <h2>Descrição da Solicitação</h2>
@@ -258,6 +301,48 @@
       <input type="text" id="ret_tecnico" placeholder="TÉCNICO/AUXILIAR">
     </div>
 
+</div>
+
+<div id="formFusao" style="display:none;">
+
+  <div class="section">
+    <h2>Categoria</h2>
+    <div class="cat-list" id="fusaoCatList"></div>
+  </div>
+
+  <div class="section">
+    <h2>Dados da O.S</h2>
+    <label>Número da O.S</label>
+    <input type="text" id="f_os" placeholder="161445">
+    <label>Projeto-CTO</label>
+    <input type="text" id="f_projetoCto" placeholder="ex: BCA-4">
+    <label>Técnico / Auxiliar</label>
+    <input type="text" id="f_tecnico" placeholder="TÉCNICO/AUXILIAR">
+    <label>Observações</label>
+    <textarea id="f_obs" placeholder="Descreva o que foi encontrado e realizado na atividade."></textarea>
+  </div>
+
+  <div class="section">
+    <h2>Materiais Utilizados</h2>
+    <label>FIBRA</label>
+    <div class="app-row" id="fusaoFibraOpts"></div>
+    <div id="fusaoFibraMetragens"></div>
+    <div id="fusaoMateriaisSimples"></div>
+    <div id="fusaoSplitterCon"></div>
+    <div id="fusaoSplitterDes"></div>
+    <div id="fusaoAlca"></div>
+  </div>
+
+  <div class="section">
+    <h2>Sinal da Caixa</h2>
+    <div class="dbm-slider-wrap">
+      <div class="dbm-value" id="f_dbmValue">-20 dBm</div>
+      <input type="range" id="f_dbm" min="0" max="40" value="20" step="1">
+    </div>
+  </div>
+
+</div>
+
   </div>
 
   <div class="previewcol">
@@ -313,6 +398,202 @@ const APPS = [
 
 let selectedCat = "INSTALAÇÃO";
 
+// =====================================================================
+// EQUIPE FUSÃO — configuração
+// Para adicionar/remover itens, basta editar as listas abaixo.
+// Cada item de material é [id_unico, "RÓTULO EXIBIDO"].
+// =====================================================================
+
+// Categorias exibidas na Equipe Fusão (edite livremente esta lista)
+const FUSAO_CATEGORIAS = [
+  "TROCA DE POSTE",
+  "ROMPIMENTO DE FIBRA",
+  "FOGO",
+  "FURTO",
+  "AMPLIAÇÃO DE REDE",
+  "ESTRUTURA",
+  "ADEQUAÇÃO DE REDE"
+];
+
+// Tamanhos de FIBRA — ao marcar um, abre um campo de metragem
+// correspondente. Pode marcar mais de um ao mesmo tempo.
+const FUSAO_FIBRA_TAMANHOS = ["12FO", "24FO", "36FO", "48FO", "72FO", "144FO"];
+
+// Materiais simples (só marca/desmarca, sem quantidade nem sub-opção)
+const FUSAO_MATERIAIS_SIMPLES = [
+  ["f_plaqueta", "PLAQUETA"],
+  ["f_olhal",    "OLHAL"],
+  ["f_raquete",  "RAQUETE"],
+  ["f_caixa24",  "CAIXA DE EMENDA 24F"],
+  ["f_caixa44",  "CAIXA DE EMENDA 44F"],
+  ["f_cto",      "CTO"],
+  ["f_cdoi",     "CDOI"]
+];
+
+// Opções de razão para os splitters (edite se precisar de outras razões)
+const FUSAO_SPLITTER_RATIOS = ["1X2", "1X4", "1X8", "1X16", "1X32"];
+
+// Opções de tamanho para a alça
+const FUSAO_ALCA_TAMANHOS = ["12F", "24F", "36F", "48F", "72F", "144F"];
+
+let selectedFusaoCat = FUSAO_CATEGORIAS[0];
+
+function buildFusaoCatList(){
+  const wrap = document.getElementById('fusaoCatList');
+  wrap.innerHTML = FUSAO_CATEGORIAS.map(c => `
+    <label class="cat-opt${c===selectedFusaoCat?' active':''}" data-cat="${c}">
+      <input type="radio" name="fusaoCategoria" value="${c}" ${c===selectedFusaoCat?'checked':''}>
+      ${c}
+    </label>
+  `).join('');
+  wrap.querySelectorAll('.cat-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedFusaoCat = el.dataset.cat;
+      wrap.querySelectorAll('.cat-opt').forEach(o=>o.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    });
+  });
+}
+
+function buildFusaoFibra(){
+  const optsWrap = document.getElementById('fusaoFibraOpts');
+  optsWrap.innerHTML = FUSAO_FIBRA_TAMANHOS.map(t=>`
+    <label><input type="checkbox" class="f-fibra-opt" id="f_fibra_${t}_chk" value="${t}"> ${t}</label>
+  `).join('');
+
+  const metWrap = document.getElementById('fusaoFibraMetragens');
+  metWrap.innerHTML = FUSAO_FIBRA_TAMANHOS.map(t=>`
+    <div class="mat-row" id="f_fibra_${t}_row" style="display:none">
+      <span>METRAGEM ${t}</span>
+      <input type="number" min="0" id="f_fibra_${t}_metros" placeholder="metros">
+    </div>
+  `).join('');
+
+  optsWrap.querySelectorAll('.f-fibra-opt').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const row = document.getElementById('f_fibra_'+cb.value+'_row');
+      row.style.display = cb.checked ? 'flex' : 'none';
+      if(!cb.checked){
+        document.getElementById('f_fibra_'+cb.value+'_metros').value = '';
+      }
+      render();
+    });
+  });
+}
+
+function buildFusaoMateriaisSimples(){
+  const wrap = document.getElementById('fusaoMateriaisSimples');
+  wrap.innerHTML = FUSAO_MATERIAIS_SIMPLES.map(([id,label])=>`
+    <div class="toggle-row">
+      <label><input type="checkbox" id="${id}"> ${label}</label>
+      <div class="sub-options" id="${id}_opts">
+        <label>QTD: <input type="number" min="0" id="${id}_qtd" style="width:70px"></label>
+      </div>
+    </div>
+  `).join('');
+
+  FUSAO_MATERIAIS_SIMPLES.forEach(([id])=>{
+    const cb = document.getElementById(id);
+    const opts = document.getElementById(id+'_opts');
+    cb.addEventListener('change', ()=>{
+      opts.style.display = cb.checked ? 'flex' : 'none';
+      if(!cb.checked){
+        document.getElementById(id+'_qtd').value = '';
+      }
+      render();
+    });
+  });
+}
+
+// Cria um grupo tipo "SPLITTER CONECTORIZADO" / "ALÇA": ao marcar o item
+// principal, abre as sub-opções (razão do splitter ou tamanho da alça),
+// que podem ter mais de uma marcada.
+function buildToggleGroup(containerId, enableId, label, options, optClass){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = `
+    <div class="toggle-row">
+      <label><input type="checkbox" id="${enableId}"> ${label}</label>
+      <div class="sub-options" id="${enableId}_opts">
+        ${options.map(o=>`<label><input type="checkbox" class="${optClass}" value="${o}"> ${o}</label>`).join('')}
+      </div>
+    </div>
+  `;
+  const enableEl = document.getElementById(enableId);
+  const optsEl = document.getElementById(enableId+'_opts');
+  enableEl.addEventListener('change', ()=>{
+    optsEl.style.display = enableEl.checked ? 'flex' : 'none';
+    if(!enableEl.checked){
+      optsEl.querySelectorAll('input[type=checkbox]').forEach(o=>o.checked=false);
+    }
+    render();
+  });
+}
+
+function buildFusaoForm(){
+  buildFusaoCatList();
+  buildFusaoFibra();
+  buildFusaoMateriaisSimples();
+  buildToggleGroup('fusaoSplitterCon', 'f_splitterCon', 'SPLITTER CONECTORIZADO', FUSAO_SPLITTER_RATIOS, 'f-splitterCon-opt');
+  buildToggleGroup('fusaoSplitterDes', 'f_splitterDes', 'SPLITTER DESCONECTORIZADO', FUSAO_SPLITTER_RATIOS, 'f-splitterDes-opt');
+  buildToggleGroup('fusaoAlca', 'f_alca', 'ALÇA', FUSAO_ALCA_TAMANHOS, 'f-alca-opt');
+}
+
+function renderFusao(){
+  const os = val('f_os');
+  const projetoCto = val('f_projetoCto');
+  const tecnico = val('f_tecnico');
+  const obs = val('f_obs');
+  const dbm = document.getElementById('f_dbm').value;
+
+  document.getElementById('f_dbmValue').textContent = `-${dbm} dBm`;
+
+  let matLinhas = [];
+
+  FUSAO_FIBRA_TAMANHOS.forEach(t=>{
+    const cb = document.getElementById('f_fibra_'+t+'_chk');
+    if(cb && cb.checked){
+      const m = qty(val('f_fibra_'+t+'_metros'));
+      matLinhas.push(`[X] FIBRA AS ${t}${m !== "" ? ` — METRAGEM: ${m}` : ''}`);
+    }
+  });
+
+  FUSAO_MATERIAIS_SIMPLES.forEach(([id,label])=>{
+    if(document.getElementById(id).checked){
+      const q = qty(val(id+'_qtd'));
+      matLinhas.push(`[X] ${label}${q !== "" ? ` — QTD: ${q}` : ''}`);
+    }
+  });
+
+  function linhasToggleGroup(enableId, label, optClass){
+    if(!document.getElementById(enableId).checked) return;
+    document.querySelectorAll('.'+optClass+':checked').forEach(o=>{
+      matLinhas.push(`[X] ${label} ${o.value}`);
+    });
+  }
+  linhasToggleGroup('f_splitterCon', 'SPLITTER CONECTORIZADO', 'f-splitterCon-opt');
+  linhasToggleGroup('f_splitterDes', 'SPLITTER DESCONECTORIZADO', 'f-splitterDes-opt');
+  linhasToggleGroup('f_alca', 'ALÇA', 'f-alca-opt');
+
+  const matBlock = matLinhas.join('\n');
+
+  const output = `CATEGORIA:
+
+[X] ${selectedFusaoCat}
+
+OS: ${ph(os)}
+PROJETO-CTO:${ph(projetoCto)}
+TÉCNICO/AUXILIAR: ${ph(tecnico)}
+OBS: ${ph(obs)}
+
+MATERIAL UTILIZADO:
+${matBlock}
+
+SINAL DA CAIXA: -${dbm} dBm`;
+
+  document.getElementById('output').textContent = output;
+}
+
 function buildCatList(){
   const wrap = document.getElementById('catList');
   wrap.innerHTML = CATEGORIAS.map(c => `
@@ -354,6 +635,8 @@ function chk(cond){ return cond ? "X" : " "; }
 function qty(v){ return v && Number(v) > 0 ? v : ""; }
 
 function render(){
+  if(equipeAtual === 'fusao'){ renderFusao(); return; }
+
   const isRetirada = selectedCat === 'RETIRADA';
 
   document.getElementById('secIdentificacao').style.display = isRetirada ? 'none' : '';
@@ -536,7 +819,20 @@ function copyOutput(){
 buildCatList();
 buildMateriais();
 buildApps();
+buildFusaoForm();
 setTimeout(()=>{const s=document.getElementById('porta');const v=document.getElementById('dbmValue');const u=()=>v.textContent='-'+s.value+' dBm';s.addEventListener('input',u);u();},0);
+
+let equipeAtual = 'padrao';
+document.querySelectorAll('#equipeToggle .equipe-opt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    equipeAtual = el.dataset.equipe;
+    document.querySelectorAll('#equipeToggle .equipe-opt').forEach(o=>o.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('formPadrao').style.display = equipeAtual === 'padrao' ? '' : 'none';
+    document.getElementById('formFusao').style.display = equipeAtual === 'fusao' ? '' : 'none';
+    render();
+  });
+});
 
 document.querySelectorAll('input, textarea, select').forEach(el=>{
   el.addEventListener('input', render);
