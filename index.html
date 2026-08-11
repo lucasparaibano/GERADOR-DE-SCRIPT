@@ -195,6 +195,16 @@
       </div>
       <label>Cliente</label>
       <input type="text" id="cliente" placeholder="NOME DO CLIENTE">
+      <label>Cidade</label>
+      <select id="cidade">
+        <option value="Maceió - AL">Maceió - AL</option>
+        <option value="Bom Conselho - PE">Bom Conselho - PE</option>
+        <option value="Outra">Outra</option>
+      </select>
+      <div id="cidadeOutraWrap" style="display:none;">
+        <label>Digite o nome da cidade</label>
+        <input type="text" id="cidadeOutra" placeholder="NOME DA CIDADE">
+      </div>
     </div>
 
     <div class="section" id="secEquipamentos">
@@ -318,6 +328,16 @@
     <input type="text" id="f_projetoCto" placeholder="ex: BCA-4">
     <label>Técnico / Auxiliar</label>
     <input type="text" id="f_tecnico" placeholder="TÉCNICO/AUXILIAR">
+    <label>Cidade</label>
+    <select id="f_cidade">
+      <option value="Maceió - AL">Maceió - AL</option>
+      <option value="Bom Conselho - PE">Bom Conselho - PE</option>
+      <option value="Outra">Outra</option>
+    </select>
+    <div id="f_cidadeOutraWrap" style="display:none;">
+      <label>Digite o nome da cidade</label>
+      <input type="text" id="f_cidadeOutra" placeholder="NOME DA CIDADE">
+    </div>
     <label>Observações</label>
     <textarea id="f_obs" placeholder="Descreva o que foi encontrado e realizado na atividade."></textarea>
   </div>
@@ -543,6 +563,10 @@ function renderFusao(){
   const os = val('f_os');
   const projetoCto = val('f_projetoCto');
   const tecnico = val('f_tecnico');
+  const f_cidadeSel = val('f_cidade');
+  const f_cidadeOutra = val('f_cidadeOutra');
+  const cidade = f_cidadeSel === 'Outra' ? f_cidadeOutra : f_cidadeSel;
+  document.getElementById('f_cidadeOutraWrap').style.display = f_cidadeSel === 'Outra' ? 'block' : 'none';
   const obs = val('f_obs');
   const dbm = document.getElementById('f_dbm').value;
 
@@ -584,6 +608,7 @@ function renderFusao(){
 OS: ${ph(os)}
 PROJETO-CTO:${ph(projetoCto)}
 TÉCNICO/AUXILIAR: ${ph(tecnico)}
+CIDADE: ${ph(cidade)}
 OBS: ${ph(obs)}
 
 MATERIAL UTILIZADO:
@@ -685,6 +710,10 @@ function render(){
 
   const os = val('os');
   const cliente = val('cliente');
+  const cidadeSel = val('cidade');
+  const cidadeOutra = val('cidadeOutra');
+  const cidade = cidadeSel === 'Outra' ? cidadeOutra : cidadeSel;
+  document.getElementById('cidadeOutraWrap').style.display = cidadeSel === 'Outra' ? 'block' : 'none';
   const tecnico = val('tecnico');
   const onuAntiga = val('onuAntiga');
   const ponOnuAntiga = val('ponOnuAntiga');
@@ -744,6 +773,7 @@ ${catBlock}
 ${SEP}
 OS: ${ph(os)}
 CLIENTE: ${ph(cliente)}
+CIDADE: ${ph(cidade)}
 
 ${equipAntigoBlock}ONU NOVA: ${ph(onu)}
 PON:${ph(ponOnu)}
