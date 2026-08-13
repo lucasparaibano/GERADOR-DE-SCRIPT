@@ -121,6 +121,13 @@
   }
   .sub-options input{width:auto;}
 
+  .opt-qty{
+    display:flex; align-items:center; gap:8px;
+  }
+  .opt-qty input[type=number]{
+    width:64px; min-height:auto; padding:6px 8px; font-size:12.5px; display:none;
+  }
+
   .dbm-slider-wrap{margin-top:6px;}
   .dbm-slider-wrap .dbm-value{
     text-align:center; font-size:22px; font-weight:700; color:var(--teal); margin-bottom:8px;
@@ -535,16 +542,35 @@ function buildToggleGroup(containerId, enableId, label, options, optClass){
     <div class="toggle-row">
       <label><input type="checkbox" id="${enableId}"> ${label}</label>
       <div class="sub-options" id="${enableId}_opts">
-        ${options.map(o=>`<label><input type="checkbox" class="${optClass}" value="${o}"> ${o}</label>`).join('')}
+        ${options.map(o=>`
+          <div class="opt-qty">
+            <label><input type="checkbox" class="${optClass}" value="${o}" id="${enableId}_${o}_chk"> ${o}</label>
+            <input type="number" min="0" placeholder="qtd" id="${enableId}_${o}_qtd">
+          </div>
+        `).join('')}
       </div>
     </div>
   `;
   const enableEl = document.getElementById(enableId);
   const optsEl = document.getElementById(enableId+'_opts');
+
+  options.forEach(o=>{
+    const optChk = document.getElementById(`${enableId}_${o}_chk`);
+    const optQty = document.getElementById(`${enableId}_${o}_qtd`);
+    optChk.addEventListener('change', ()=>{
+      optQty.style.display = optChk.checked ? 'inline-block' : 'none';
+      if(!optChk.checked){
+        optQty.value = '';
+      }
+      render();
+    });
+  });
+
   enableEl.addEventListener('change', ()=>{
     optsEl.style.display = enableEl.checked ? 'flex' : 'none';
     if(!enableEl.checked){
       optsEl.querySelectorAll('input[type=checkbox]').forEach(o=>o.checked=false);
+      optsEl.querySelectorAll('input[type=number]').forEach(q=>{ q.value=''; q.style.display='none'; });
     }
     render();
   });
@@ -592,7 +618,8 @@ function renderFusao(){
   function linhasToggleGroup(enableId, label, optClass){
     if(!document.getElementById(enableId).checked) return;
     document.querySelectorAll('.'+optClass+':checked').forEach(o=>{
-      matLinhas.push(`[X] ${label} ${o.value}`);
+      const q = qty(document.getElementById(o.id.replace('_chk','_qtd')).value.trim());
+      matLinhas.push(`[X] ${label} ${o.value}${q !== "" ? ` - QTD: ${q}` : ''}`);
     });
   }
   linhasToggleGroup('f_splitterCon', 'SPLITTER CONECTORIZADO', 'f-splitterCon-opt');
