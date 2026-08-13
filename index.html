@@ -128,6 +128,14 @@
     width:64px; min-height:auto; padding:6px 8px; font-size:12.5px; display:none;
   }
 
+  .wifi-row{display:flex; align-items:stretch;}
+  .wifi-prefix{
+    display:flex; align-items:center; padding:0 12px; background:var(--panel-2);
+    border:1px solid var(--line); border-right:none; border-radius:12px 0 0 12px;
+    font-size:17px; color:var(--text-dim); font-weight:700; white-space:nowrap;
+  }
+  .wifi-row input{border-radius:0 12px 12px 0; text-transform:uppercase;}
+
   .dbm-slider-wrap{margin-top:6px;}
   .dbm-slider-wrap .dbm-value{
     text-align:center; font-size:22px; font-weight:700; color:var(--teal); margin-bottom:8px;
@@ -198,8 +206,10 @@
       <h2>Identificação</h2>
       <div class="grid2">
         <div><label>OS</label><input type="text" id="os" placeholder="161445"></div>
-        <div><label>Técnico</label><input type="text" id="tecnico" placeholder="TÉCNICO/AUXILIAR"></div>
+        <div><label>Técnico</label><input type="text" id="tecnico" list="listaTecnicos" placeholder="Buscar técnico..." autocomplete="off"></div>
       </div>
+      <label>Auxiliar</label>
+      <input type="text" id="auxiliar" list="listaAuxiliares" placeholder="Buscar auxiliar (opcional)..." autocomplete="off">
       <label>Cliente</label>
       <input type="text" id="cliente" placeholder="NOME DO CLIENTE">
       <label>Cidade</label>
@@ -245,7 +255,13 @@
     <div class="section" id="secRede">
       <h2>Rede</h2>
       <div class="grid2">
-        <div><label>Rede Wi-Fi</label><input type="text" id="wifi"></div>
+        <div>
+          <label>Rede Wi-Fi</label>
+          <div class="wifi-row">
+            <span class="wifi-prefix">DTEL_</span>
+            <input type="text" id="wifiSufixo" placeholder="JOAO" autocomplete="off">
+          </div>
+        </div>
         <div><label>Senha</label><input type="text" id="senha"></div>
       </div>
       <label>Observação</label>
@@ -281,6 +297,7 @@
 
       <label style="margin-top:14px;">Apps instalados no cliente</label>
       <div class="app-row" id="appsRow"></div>
+      <div id="appStreamingsWrap"></div>
 
       <label>Conectados</label>
       <input type="text" id="conectados" placeholder="ex: SMART TV, CELULAR, NOTEBOOK">
@@ -315,7 +332,9 @@
       <label>Observação</label>
       <textarea id="ret_obs"></textarea>
       <label>Técnico</label>
-      <input type="text" id="ret_tecnico" placeholder="TÉCNICO/AUXILIAR">
+      <input type="text" id="ret_tecnico" list="listaTecnicos" placeholder="Buscar técnico..." autocomplete="off">
+      <label>Auxiliar</label>
+      <input type="text" id="ret_auxiliar" list="listaAuxiliares" placeholder="Buscar auxiliar (opcional)..." autocomplete="off">
     </div>
 
 </div>
@@ -333,8 +352,10 @@
     <input type="text" id="f_os" placeholder="161445">
     <label>Projeto-CTO</label>
     <input type="text" id="f_projetoCto" placeholder="ex: BCA-4">
-    <label>Técnico / Auxiliar</label>
-    <input type="text" id="f_tecnico" placeholder="TÉCNICO/AUXILIAR">
+    <label>Técnico</label>
+    <input type="text" id="f_tecnico" list="listaTecnicosFusao" placeholder="Buscar técnico..." autocomplete="off">
+    <label>Auxiliar</label>
+    <input type="text" id="f_auxiliar" list="listaAuxiliaresFusao" placeholder="Buscar auxiliar (opcional)..." autocomplete="off">
     <label>Cidade</label>
     <select id="f_cidade">
       <option value="Maceió - AL">Maceió - AL</option>
@@ -382,6 +403,34 @@
   </div>
 </div>
 
+<datalist id="listaTecnicos">
+  <option value="ISAIAS">
+  <option value="GEZIEL">
+  <option value="FERNANDO">
+  <option value="EDIVAN">
+  <option value="JHONATAS">
+  <option value="ROBERTO">
+  <option value="HYGO">
+  <option value="GABRIEL">
+  <option value="WILLAMS XAVIER">
+  <option value="ÍCARO">
+  <option value="ELIEL">
+  <option value="ALETÁCIO">
+</datalist>
+<datalist id="listaAuxiliares">
+  <option value="FÁBIO">
+  <option value="MELQUIZEDEQUE">
+  <option value="MATEUS">
+</datalist>
+<datalist id="listaTecnicosFusao">
+  <option value="MIGUEL">
+  <option value="LUCAS VIERTON">
+</datalist>
+<datalist id="listaAuxiliaresFusao">
+  <option value="JAMERSON">
+  <option value="ERINALDO">
+</datalist>
+
 <script>
 const CATEGORIAS = [
   "INSTALAÇÃO",
@@ -419,9 +468,15 @@ const APPS = [
   ["appCentral", "CENTRAL DO ASSINANTE"],
   ["appDtelPlay", "DTEL PLAY"],
   ["appParamount", "MAPEAMENTO WIFIMAN"],
-  ["appPontoRede", "AMAZON PRIME"],
+  ["appStreamings", "STREAMINGS (Amazon, Disney, Apple Tv, HBO, GloboPlay)"],
   ["appTeste", "TESTE DE VELOCIDADE"]
 ];
+
+// Apps que já vêm marcados por padrão ao abrir o formulário
+const APPS_DEFAULT_CHECKED = ["appCentral", "appParamount", "appTeste"];
+
+// Opções exibidas quando "STREAMINGS" é marcado
+const STREAMING_OPCOES = ["AMAZON PRIME VIDEO", "DISNEY+", "APPLE TV", "HBO MAX", "GLOBOPLAY"];
 
 let selectedCat = "INSTALAÇÃO";
 
@@ -589,6 +644,7 @@ function renderFusao(){
   const os = val('f_os');
   const projetoCto = val('f_projetoCto');
   const tecnico = val('f_tecnico');
+  const auxiliar = val('f_auxiliar');
   const f_cidadeSel = val('f_cidade');
   const f_cidadeOutra = val('f_cidadeOutra');
   const cidade = f_cidadeSel === 'Outra' ? f_cidadeOutra : f_cidadeSel;
@@ -627,6 +683,7 @@ function renderFusao(){
   linhasToggleGroup('f_alca', 'ALÇA', 'f-alca-opt');
 
   const matBlock = matLinhas.join('\n');
+  const auxiliarLinhaF = auxiliar ? `AUXILIAR: ${auxiliar}\n` : '';
 
   const output = `CATEGORIA:
 
@@ -634,8 +691,8 @@ function renderFusao(){
 
 OS: ${ph(os)}
 PROJETO-CTO:${ph(projetoCto)}
-TÉCNICO/AUXILIAR: ${ph(tecnico)}
-CIDADE: ${ph(cidade)}
+TÉCNICO: ${ph(tecnico)}
+${auxiliarLinhaF}CIDADE: ${ph(cidade)}
 OBS: ${ph(obs)}
 
 MATERIAL UTILIZADO:
@@ -676,9 +733,33 @@ function buildMateriais(){
 
 function buildApps(){
   const wrap = document.getElementById('appsRow');
-  wrap.innerHTML = APPS.map(([id,label])=>`
-    <label><input type="checkbox" id="${id}"> ${label}</label>
-  `).join('');
+  wrap.innerHTML = APPS
+    .filter(([id]) => id !== 'appStreamings')
+    .map(([id,label])=>{
+      const checked = APPS_DEFAULT_CHECKED.includes(id) ? 'checked' : '';
+      return `<label><input type="checkbox" id="${id}" ${checked}> ${label}</label>`;
+    }).join('');
+
+  // STREAMINGS - ao marcar, abre a lista de plataformas instaladas
+  const streamWrap = document.getElementById('appStreamingsWrap');
+  const streamLabel = APPS.find(([id]) => id === 'appStreamings')[1];
+  streamWrap.innerHTML = `
+    <div class="toggle-row">
+      <label><input type="checkbox" id="appStreamings"> ${streamLabel}</label>
+      <div class="sub-options" id="appStreamings_opts">
+        ${STREAMING_OPCOES.map(o=>`<label><input type="checkbox" class="streaming-opt" value="${o}"> ${o}</label>`).join('')}
+      </div>
+    </div>
+  `;
+  const streamChk = document.getElementById('appStreamings');
+  const streamOpts = document.getElementById('appStreamings_opts');
+  streamChk.addEventListener('change', ()=>{
+    streamOpts.style.display = streamChk.checked ? 'flex' : 'none';
+    if(!streamChk.checked){
+      streamOpts.querySelectorAll('input[type=checkbox]').forEach(o=>o.checked=false);
+    }
+    render();
+  });
 }
 
 function val(id){ return document.getElementById(id).value.trim(); }
@@ -712,7 +793,9 @@ function render(){
     const retQntConAzul = qty(val('ret_qntConAzul'));
     const retObs = val('ret_obs');
     const retTecnico = val('ret_tecnico');
+    const retAuxiliar = val('ret_auxiliar');
     const retCidade = val('ret_cidade');
+    const retAuxiliarLinha = retAuxiliar ? `*AUXILIAR:* ${retAuxiliar}\n` : '';
 
     const output = `*RETIRADA CONCLUÍDA*
 
@@ -729,7 +812,7 @@ function render(){
 *QNT. CONECTOR AZUL:* ${ph(retQntConAzul)}
 *OBS:* ${ph(retObs)}
 *TÉCNICO:* ${ph(retTecnico)}
-*CIDADE:* ${ph(retCidade)}`;
+${retAuxiliarLinha}*CIDADE:* ${ph(retCidade)}`;
 
     document.getElementById('output').textContent = output;
     return;
@@ -742,6 +825,7 @@ function render(){
   const cidade = cidadeSel === 'Outra' ? cidadeOutra : cidadeSel;
   document.getElementById('cidadeOutraWrap').style.display = cidadeSel === 'Outra' ? 'block' : 'none';
   const tecnico = val('tecnico');
+  const auxiliar = val('auxiliar');
   const onuAntiga = val('onuAntiga');
   const ponOnuAntiga = val('ponOnuAntiga');
   const roteadorAntigo = val('roteadorAntigo');
@@ -752,7 +836,8 @@ function render(){
   const ponRot = val('ponRot');
   const cto = val('cto');
   const porta=document.getElementById('porta').value;
-  const wifi = val('wifi');
+  const wifiSufixo = val('wifiSufixo');
+  const wifi = 'DTEL_' + wifiSufixo.toUpperCase();
   const senha = val('senha');
   const obs = val('obs');
   const conectados = val('conectados');
@@ -782,7 +867,14 @@ function render(){
 
   let appsBlock = APPS.map(([id,label])=>{
     const checked = document.getElementById(id).checked;
-    return `[${chk(checked)}] ${label}`;
+    let linha = `[${chk(checked)}] ${label}`;
+    if(id === 'appStreamings' && checked){
+      const selecionados = Array.from(document.querySelectorAll('.streaming-opt:checked')).map(o=>o.value);
+      if(selecionados.length){
+        linha += ` - ${selecionados.join(', ')}`;
+      }
+    }
+    return linha;
   }).join('\n');
 
   const SEP = '';
@@ -793,6 +885,7 @@ ROTEADOR ANTIGO: ${ph(roteadorAntigo)}
 SN: ${ph(snRoteadorAntigo)}
 ${SEP}
 `;
+  const auxiliarLinha = auxiliar ? `AUXILIAR: ${auxiliar}\n` : '';
 
   const output = `${descricaoServico}
 CATEGORIA:
@@ -814,7 +907,7 @@ REDE WIFI:${ph(wifi)}
 SENHA:${ph(senha)}
 ${SEP}
 TÉCNICO: ${ph(tecnico)}
-OBS: ${ph(obs)}
+${auxiliarLinha}OBS: ${ph(obs)}
 ${SEP}
 LISTA DE MATERIAIS UTILIZADOS:
 ${matBlock}
@@ -877,6 +970,16 @@ buildCatList();
 buildMateriais();
 buildApps();
 buildFusaoForm();
+
+// Rede Wi-Fi: mantém sempre em maiúsculo o que o técnico digita após "DTEL_"
+const wifiSufixoEl = document.getElementById('wifiSufixo');
+if(wifiSufixoEl){
+  wifiSufixoEl.addEventListener('input', function(){
+    const pos = this.selectionStart;
+    this.value = this.value.toUpperCase();
+    this.setSelectionRange(pos, pos);
+  });
+}
 setTimeout(()=>{const s=document.getElementById('porta');const v=document.getElementById('dbmValue');const u=()=>v.textContent='-'+s.value+' dBm';s.addEventListener('input',u);u();},0);
 
 let equipeAtual = 'padrao';
