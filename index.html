@@ -371,7 +371,7 @@
       <button id="copyBtn" onclick="copyOutput()">COPIAR SCRIPT</button>
     </div>
     <pre id="output"></pre>
-    <div class="footnote">Campos em branco aparecem como reticências — confira antes de colar na OS.</div>
+    <div class="footnote"></div>
   </div>
 </div>
 
@@ -419,7 +419,7 @@ const APPS = [
 let selectedCat = "INSTALAÇÃO";
 
 // =====================================================================
-// EQUIPE FUSÃO — configuração
+// EQUIPE FUSÃO - configuração
 // Para adicionar/remover itens, basta editar as listas abaixo.
 // Cada item de material é [id_unico, "RÓTULO EXIBIDO"].
 // =====================================================================
@@ -435,7 +435,7 @@ const FUSAO_CATEGORIAS = [
   "ADEQUAÇÃO DE REDE"
 ];
 
-// Tamanhos de FIBRA — ao marcar um, abre um campo de metragem
+// Tamanhos de FIBRA - ao marcar um, abre um campo de metragem
 // correspondente. Pode marcar mais de um ao mesmo tempo.
 const FUSAO_FIBRA_TAMANHOS = ["12FO", "24FO", "36FO", "48FO", "72FO", "144FO"];
 
@@ -578,14 +578,14 @@ function renderFusao(){
     const cb = document.getElementById('f_fibra_'+t+'_chk');
     if(cb && cb.checked){
       const m = qty(val('f_fibra_'+t+'_metros'));
-      matLinhas.push(`[X] FIBRA AS ${t}${m !== "" ? ` — METRAGEM: ${m}` : ''}`);
+      matLinhas.push(`[X] FIBRA AS ${t}${m !== "" ? ` - METRAGEM: ${m}` : ''}`);
     }
   });
 
   FUSAO_MATERIAIS_SIMPLES.forEach(([id,label])=>{
     if(document.getElementById(id).checked){
       const q = qty(val(id+'_qtd'));
-      matLinhas.push(`[X] ${label}${q !== "" ? ` — QTD: ${q}` : ''}`);
+      matLinhas.push(`[X] ${label}${q !== "" ? ` - QTD: ${q}` : ''}`);
     }
   });
 
