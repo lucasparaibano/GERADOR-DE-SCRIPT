@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Gerador de Script de OS</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --bg:#12181a;
+    --panel:#1a2226;
+    --panel-2:#202a2f;
+    --line:#2b363b;
+    --teal:#00c2a8;
+    --teal-dim:#0a3d36;
+    --amber:#e8a33d;
+    --text:#e8edee;
+    --text-dim:#8ea3a8;
+    --mono: 'Consolas','SFMono-Regular','Menlo',monospace;
+    --sans: -apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); min-height:100vh;
+  }
+  .topbar{
+    max-width:none; width:100%; margin:0;
+    padding:18px 20px; border-bottom:1px solid var(--line);
+    border-left:1px solid var(--line); border-right:1px solid var(--line);
+    display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  }
+  .topbar .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);}
+  .topbar h1{font-size:16px; margin:0; letter-spacing:.03em; font-weight:600;}
+  .topbar span{color:var(--text-dim); font-size:12.5px;}
+
+  .layout{
+    max-width:none; width:100%; margin:0;
+    display:grid; grid-template-columns: 1fr; gap:0;
+    border-left:1px solid var(--line); border-right:1px solid var(--line);
+  }
+
+  .formcol{
+    padding:16px 16px 90px; border-bottom:1px solid var(--line); overflow-y:auto;
+  }
+
+  .section{
+    margin-bottom:14px; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:14px 14px;
+  }
+  .section h2{
+    font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--teal);
+    margin:0 0 12px; font-weight:700;
+  }
+  label{
+    display:block; font-size:12.5px; color:var(--text-dim); margin:10px 0 4px;
+  }
+  input[type=text], input[type=number], textarea, select{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:12px; padding:14px 14px; font-size:17px; min-height:52px; font-family:var(--sans);
+  }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--teal); }
+  textarea{resize:vertical; min-height:52px;}
+  .grid2{display:grid; grid-template-columns:1fr; gap:0 14px;}
+  .grid3{display:grid; grid-template-columns:1fr; gap:0 14px;}
+
+  .cat-list{display:flex; flex-direction:column; gap:6px;}
+  .cat-opt{
+    display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:6px;
+    border:1px solid var(--line); cursor:pointer; font-size:13px; background:var(--panel-2);
+  }
+  .cat-opt.active{ border-color:var(--teal); background:var(--teal-dim); color:#fff; }
+  .cat-opt input{width:auto;}
+
+  .mat-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:6px 0; border-bottom:1px dashed var(--line); font-size:13px;
+  }
+  .mat-row:last-child{border-bottom:none;}
+  .mat-row input{width:70px; text-align:center;}
+
+  .radio-row{display:flex; gap:16px; align-items:center; margin-top:6px;}
+  .radio-row label{display:flex; align-items:center; gap:6px; margin:0; font-size:13px; color:var(--text);}
+  .radio-row input{width:auto;}
+
+  .app-row{display:flex; flex-wrap:wrap; gap:10px 18px; margin-top:6px;}
+  .app-row label{display:flex; align-items:center; gap:6px; margin:0; font-size:12.5px; color:var(--text);}
+  .app-row input{width:auto;}
+
+  .equipe-toggle{
+    max-width:none; width:100%; margin:0; display:flex; gap:0;
+    border-left:1px solid var(--line); border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .equipe-opt{
+    flex:1; text-align:center; padding:13px 10px; font-size:12.5px; font-weight:700;
+    letter-spacing:.04em; text-transform:uppercase; cursor:pointer; color:var(--text-dim);
+    background:var(--panel); border-right:1px solid var(--line); user-select:none;
+  }
+  .equipe-opt:last-child{border-right:none;}
+  .equipe-opt input{display:none;}
+  .equipe-opt.active{ color:#04211d; background:var(--teal); }
+
+  .toggle-row{
+    display:flex; flex-direction:column; align-items:stretch; padding:6px 0;
+    border-bottom:1px dashed var(--line);
+  }
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-row > label{
+    display:flex; align-items:center; gap:8px; margin:0; font-size:13px; color:var(--text);
+  }
+  .toggle-row > label input{width:auto;}
+  .sub-options{
+    display:none; margin-top:8px; padding-left:24px; flex-wrap:wrap; gap:8px 16px;
+  }
+  .sub-options label{
+    display:flex; align-items:center; gap:6px; margin:0; font-size:12.5px; color:var(--text-dim);
+  }
+  .sub-options input{width:auto;}
+
+  .opt-qty{
+    display:flex; align-items:center; gap:8px;
+  }
+  .opt-qty input[type=number]{
+    width:64px; min-height:auto; padding:6px 8px; font-size:12.5px; display:none;
+  }
+
+  .wifi-row{display:flex; align-items:stretch;}
+  .wifi-prefix{
+    display:flex; align-items:center; padding:0 12px; background:var(--panel-2);
+    border:1px solid var(--line); border-right:none; border-radius:12px 0 0 12px;
+    font-size:17px; color:var(--text-dim); font-weight:700; white-space:nowrap;
+  }
+  .wifi-row input{border-radius:0 12px 12px 0; text-transform:uppercase;}
+
+  .dbm-slider-wrap{margin-top:6px;}
+  .dbm-slider-wrap .dbm-value{
+    text-align:center; font-size:22px; font-weight:700; color:var(--teal); margin-bottom:8px;
+  }
+
+  .previewcol{display:none;/*hidden on mobile*/
+    padding:20px 20px 24px; display:flex; flex-direction:column; background:#0e1315;
+  }
+  .preview-head{
+    position:sticky; top:0; background:#0e1315; z-index:5;
+    display:flex; justify-content:space-between; align-items:center;
+    padding-top:4px; padding-bottom:8px; margin-bottom:10px;
+  }
+  .preview-head span{font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--text-dim);}
+  #copyBtn{
+    background:var(--teal); color:#04211d; border:none; border-radius:6px;
+    padding:12px 18px; font-weight:700; font-size:13.5px; cursor:pointer; letter-spacing:.02em;
+  }
+  #copyBtn:active{transform:translateY(1px);}
+  #copyBtn.copied{background:#7fe0cf;}
+
+  pre#output{
+    flex:1; background:#0b0f11; border:1px solid var(--line); border-radius:16px;
+    padding:16px 18px; font-family:var(--mono); font-size:12.6px; line-height:1.55;
+    color:#d6f5ee; white-space:pre-wrap; word-break:break-word; margin:0;
+    max-height:calc(100vh - 150px); overflow-y:auto;
+  }
+  .missing{color:var(--amber);}
+  .footnote{font-size:11px; color:var(--text-dim); margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="dot"></div>
+  <h1>GERADOR DE SCRIPT · OS</h1>
+  <span>selecione a categoria → preencha só o que muda → copie o script e pronto | Desenvolvido por: Monique Oliveira</span>
+</div>
+
+<div class="equipe-toggle" id="equipeToggle">
+  <label class="equipe-opt active" data-equipe="padrao">
+    <input type="radio" name="equipe" value="padrao" checked> Equipe Padrão
+  </label>
+  <label class="equipe-opt" data-equipe="fusao">
+    <input type="radio" name="equipe" value="fusao"> Equipe Fusão
+  </label>
+</div>
+
+<div class="layout" id="layout">
+  <div class="formcol">
+
+<div id="formPadrao">
+
+    <div class="section">
+      <h2>Descrição da Solicitação</h2>
+      <label>DESCREVA A SOLICITAÇÃO
+      <span style="color:#8ea3a8;font-style:italic;">(ex: PROVISIONA ESSA ONU EM BRIDGE)</span>
+      </label>
+      <textarea id="descricaoServico">DESCRIÇÃO DO SERVIÇO</textarea>
+    </div>
+
+    <div class="section">
+      <h2>Categoria da Atividade</h2>
+      <div class="cat-list" id="catList"></div>
+    </div>
+
+    <div class="section" id="secIdentificacao">
+      <h2>Identificação</h2>
+      <div class="grid2">
+        <div><label>OS</label><input type="text" id="os" placeholder="161445"></div>
+        <div><label>Técnico</label><input type="text" id="tecnico" list="listaTecnicos" placeholder="Buscar técnico..." autocomplete="off"></div>
+      </div>
+      <label>Auxiliar</label>
+      <input type="text" id="auxiliar" list="listaAuxiliares" placeholder="Buscar auxiliar (opcional)..." autocomplete="off">
+      <label>Cliente</label>
+      <input type="text" id="cliente" placeholder="NOME DO CLIENTE">
+      <label>Cidade</label>
+      <select id="cidade">
+        <option value="Maceió - AL">Maceió - AL</option>
+        <option value="Bom Conselho - PE">Bom Conselho - PE</option>
+        <option value="Outra">Outra</option>
+      </select>
+      <div id="cidadeOutraWrap" style="display:none;">
+        <label>Digite o nome da cidade</label>
+        <input type="text" id="cidadeOutra" placeholder="NOME DA CIDADE">
+      </div>
+    </div>
+
+    <div class="section" id="secEquipamentos">
+      <h2>Equipamentos</h2>
+      <div id="equipAntigoWrap">
+        <div class="grid2">
+          <div>
+            <label>ONU Antiga</label>
+            <select id="onuAntiga"></select>
+            <div id="onuAntigaOutroWrap" style="display:none;">
+              <label>Digite o modelo da ONU antiga</label>
+              <input type="text" id="onuAntigaOutro" placeholder="MODELO DA ONU">
+            </div>
+          </div>
+          <div><label>PON (ONU Antiga)</label><input type="text" id="ponOnuAntiga"></div>
+        </div>
+        <div class="grid2">
+          <div>
+            <label>Roteador Antigo</label>
+            <select id="roteadorAntigo"></select>
+            <div id="roteadorAntigoOutroWrap" style="display:none;">
+              <label>Digite o modelo do roteador antigo</label>
+              <input type="text" id="roteadorAntigoOutro" placeholder="MODELO DO ROTEADOR">
+            </div>
+          </div>
+          <div><label>SN (Roteador Antigo)</label><input type="text" id="snRoteadorAntigo"></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>ONU Nova</label>
+          <select id="onu"></select>
+          <div id="onuOutroWrap" style="display:none;">
+            <label>Digite o modelo da ONU</label>
+            <input type="text" id="onuOutro" placeholder="MODELO DA ONU">
+          </div>
+        </div>
+        <div><label>PON (ONU)</label><input type="text" id="ponOnu"></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Roteador Novo</label>
+          <select id="roteador"></select>
+          <div id="roteadorOutroWrap" style="display:none;">
+            <label>Digite o modelo do roteador</label>
+            <input type="text" id="roteadorOutro" placeholder="MODELO DO ROTEADOR">
+          </div>
+        </div>
+        <div><label>SN (Roteador)</label><input type="text" id="ponRot"></div>
+      </div>
+      <div class="grid2">
+        <div><label>CTO</label><input type="text" id="cto" placeholder="ABC-4"></div>
+        <div><label>DBM: <span id="dbmValue">-20 dBm</span></label><input type="range" id="porta" min="16" max="35" value="20"></div>
+      </div>
+      <div id="dbmJustWrap" style="display:none;margin-top:10px">
+      <label>Justificativa do DBM elevado</label><textarea id="dbmJust"></textarea></div><div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><label><input type="checkbox" id="ipv" checked> IPV6 e IPV4</label><label><input type="checkbox" id="remoto" checked> ACESSO REMOTO ATIVO</label></div>
+    </div>
+
+    <div class="section" id="secRede">
+      <h2>Rede</h2>
+      <div class="grid2">
+        <div>
+          <label>Rede Wi-Fi</label>
+          <div class="wifi-row">
+            <span class="wifi-prefix">DTEL_</span>
+            <input type="text" id="wifiSufixo" placeholder="JOAO" autocomplete="off">
+          </div>
+        </div>
+        <div><label>Senha</label><input type="text" id="senha"></div>
+      </div>
+      <label>Observação</label>
+      <textarea id="obs">INSTALAÇÃO REALIZADA COM SUCESSO!</textarea>
+    </div>
+
+    <div class="section" id="secMateriais">
+      <h2>Materiais Utilizados</h2>
+      <div id="materiais"></div>
+    </div>
+
+    <div class="section" id="secContratoApps">
+      <h2>Contrato e Aplicativos</h2>
+      <label>Contrato assinado?</label>
+      <div class="radio-row">
+        <label><input type="radio" name="contrato" value="sim" checked> SIM</label>
+        <label><input type="radio" name="contrato" value="nao"> NÃO</label>
+      </div>
+      <div id="contratoMotivoWrap" style="display:none;">
+        <label>Se não, porquê</label>
+        <input type="text" id="contratoMotivo">
+      </div>
+
+      <label style="margin-top:14px;">Ponto de rede instalado?</label>
+      <div class="radio-row">
+        <label><input type="radio" name="ponto" value="sim"> SIM</label>
+        <label><input type="radio" name="ponto" value="nao" checked> NÃO</label>
+      </div>
+      <div id="pontoMotivoWrap" style="display:none;">
+        <label>Se não, porquê</label>
+        <input type="text" id="pontoMotivo">
+      </div>
+
+      <label style="margin-top:14px;">Apps instalados no cliente</label>
+      <div class="app-row" id="appsRow"></div>
+      <div id="appStreamingsWrap"></div>
+
+      <label>Conectados</label>
+      <input type="text" id="conectados" placeholder="ex: SMART TV, CELULAR, NOTEBOOK">
+    </div>
+
+    <div class="section" id="secRetirada" style="display:none;">
+      <h2>Dados da Retirada</h2>
+      <div class="grid2">
+        <div><label>O.S</label><input type="text" id="ret_os" placeholder="161445"></div>
+        <div><label>Nome</label><input type="text" id="ret_nome" placeholder="NOME DO CLIENTE"></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Modelo da ONU</label>
+          <select id="ret_modeloOnu"></select>
+          <div id="ret_modeloOnuOutroWrap" style="display:none;">
+            <label>Digite o modelo da ONU</label>
+            <input type="text" id="ret_modeloOnuOutro" placeholder="MODELO DA ONU">
+          </div>
+        </div>
+        <div><label>PON</label><input type="text" id="ret_pon"></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Roteador</label>
+          <select id="ret_roteador"></select>
+          <div id="ret_roteadorOutroWrap" style="display:none;">
+            <label>Digite o modelo do roteador</label>
+            <input type="text" id="ret_roteadorOutro" placeholder="MODELO DO ROTEADOR">
+          </div>
+        </div>
+        <div><label>Serial</label><input type="text" id="ret_serial"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Qnt. Plaqueta</label><input type="number" min="0" id="ret_qntPlaqueta"></div>
+        <div><label>Qnt. Esticador</label><input type="number" min="0" id="ret_qntEsticador"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Qnt. Drop</label><input type="number" min="0" id="ret_qntDrop"></div>
+        <div><label>Qnt. Conector Verde</label><input type="number" min="0" id="ret_qntConVerde"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Qnt. Conector Azul</label><input type="number" min="0" id="ret_qntConAzul"></div>
+        <div><label>Cidade</label><input type="text" id="ret_cidade"></div>
+      </div>
+      <label>Observação</label>
+      <textarea id="ret_obs"></textarea>
+      <label>Técnico</label>
+      <input type="text" id="ret_tecnico" list="listaTecnicos" placeholder="Buscar técnico..." autocomplete="off">
+      <label>Auxiliar</label>
+      <input type="text" id="ret_auxiliar" list="listaAuxiliares" placeholder="Buscar auxiliar (opcional)..." autocomplete="off">
+    </div>
+
+</div>
+
+<div id="formFusao" style="display:none;">
+
+  <div class="section">
+    <h2>Categoria</h2>
+    <div class="cat-list" id="fusaoCatList"></div>
+  </div>
+
+  <div class="section">
+    <h2>Dados da O.S</h2>
+    <label>Número da O.S</label>
+    <input type="text" id="f_os" placeholder="161445">
+    <label>Projeto-CTO</label>
+    <input type="text" id="f_projetoCto" placeholder="ex: BCA-4">
+    <label>Técnico</label>
+    <input type="text" id="f_tecnico" list="listaTecnicosFusao" placeholder="Buscar técnico..." autocomplete="off">
+    <label>Auxiliar</label>
+    <input type="text" id="f_auxiliar" list="listaAuxiliaresFusao" placeholder="Buscar auxiliar (opcional)..." autocomplete="off">
+    <label>Cidade</label>
+    <select id="f_cidade">
+      <option value="Maceió - AL">Maceió - AL</option>
+      <option value="Bom Conselho - PE">Bom Conselho - PE</option>
+      <option value="Outra">Outra</option>
+    </select>
+    <div id="f_cidadeOutraWrap" style="display:none;">
+      <label>Digite o nome da cidade</label>
+      <input type="text" id="f_cidadeOutra" placeholder="NOME DA CIDADE">
+    </div>
+    <label>Observações</label>
+    <textarea id="f_obs" placeholder="Descreva o que foi encontrado e realizado na atividade."></textarea>
+  </div>
+
+  <div class="section">
+    <h2>Materiais Utilizados</h2>
+    <label>FIBRA</label>
+    <div class="app-row" id="fusaoFibraOpts"></div>
+    <div id="fusaoFibraMetragens"></div>
+    <div id="fusaoMateriaisSimples"></div>
+    <div id="fusaoSplitterCon"></div>
+    <div id="fusaoSplitterDes"></div>
+    <div id="fusaoAlca"></div>
+  </div>
+
+  <div class="section">
+    <h2>Sinal da Caixa</h2>
+    <div class="dbm-slider-wrap">
+      <div class="dbm-value" id="f_dbmValue">-20 dBm</div>
+      <input type="range" id="f_dbm" min="0" max="40" value="20" step="1">
+    </div>
+  </div>
+
+</div>
+
+  </div>
+
+  <div class="previewcol">
+    <div class="preview-head">
+      <span>Script gerado</span>
+      <button id="copyBtn" onclick="copyOutput()">COPIAR SCRIPT</button>
+    </div>
+    <pre id="output"></pre>
+    <div class="footnote"></div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     LISTAS DE TÉCNICOS E AUXILIARES
+     Para adicionar um nome novo, basta copiar uma linha <option> e trocar
+     o texto entre aspas.
+     ===================================================================== -->
+<datalist id="listaTecnicos">
+  <option value="ISAIAS">
+  <option value="GEZIEL">
+  <option value="FERNANDO">
+  <option value="EDIVAN">
+  <option value="JHONATAS">
+  <option value="ROBERTO">
+  <option value="HYGO">
+  <option value="GABRIEL">
+  <option value="WILLAMS XAVIER">
+  <option value="JOSÉ ÍCARO">
+  <option value="ELIEL">
+  <option value="ALETÁCIO">
+  <option value="LUIZ ALBERTO">
+</datalist>
+<datalist id="listaAuxiliares">
+  <option value="FÁBIO">
+  <option value="MELQUIZEDEQUE">
+  <option value="MATEUS">
+  <option value="LUIZ ALBERTO">
+</datalist>
+<datalist id="listaTecnicosFusao">
+  <option value="MIGUEL">
+  <option value="LUCAS VIERTON">
+</datalist>
+<datalist id="listaAuxiliaresFusao">
+  <option value="JAMERSON">
+  <option value="ERINALDO">
+</datalist>
+
+<script>
+const CATEGORIAS = [
+  "INSTALAÇÃO",
+  "TRANSFERÊNCIA",
+  "SUPORTE",
+  "ATIVAÇÃO / ADEQUAÇÃO PPPOE ",
+  "MUDANÇA DE COMODO",
+  "UPGRADE",
+  "TROCA DE EQUIPAMENTOS",
+  "ENTREGA DE CHIP",
+  "PONTO DE REDE",
+  "INSTALAÇÃO ROTEADOR MESH",
+  "RETIRADA"
+
+];
+
+// =====================================================================
+// MODELOS DE EQUIPAMENTOS (listas suspensas)
+// Para adicionar um modelo novo, escreva mais uma linha entre aspas e
+// termine com vírgula. A opção "OUTRO MODELO" é adicionada sozinha no
+// fim de cada lista e abre um campo de texto livre — não precisa
+// escrevê-la aqui.
+// As mesmas listas valem para ONU/roteador NOVOS, ANTIGOS e RETIRADA.
+// =====================================================================
+const MODELOS_ONU = [
+  "ZTE F601",
+  "ZTE F612",
+  "TPLINK XZOOO-G7"
+];
+
+const MODELOS_ROTEADOR = [
+  "ZTE H3601PE 5 ANTENAS (AX3000)",
+  "HUAWEI EBG ISP WIFI-6 K562",
+  "ZTE H3601N 4 ANTENAS (AX1500)",
+  "ZTE E2320 2 ANTENAS"
+];
+
+// Texto da opção que libera o campo de digitação livre.
+const OUTRO_MODELO = "OUTRO MODELO";
+
+// Quais campos usam cada lista. Cada item é [id_do_select, lista].
+// Para criar um campo novo de modelo, adicione o <select id="..."> e o
+// bloco <div id="..._OutroWrap"> no HTML e registre aqui.
+const CAMPOS_MODELO = [
+  ["onu",           MODELOS_ONU],
+  ["onuAntiga",     MODELOS_ONU],
+  ["ret_modeloOnu", MODELOS_ONU],
+  ["roteador",         MODELOS_ROTEADOR],
+  ["roteadorAntigo",   MODELOS_ROTEADOR],
+  ["ret_roteador",     MODELOS_ROTEADOR]
+];
+
+const MATERIAIS = [
+  ["conVerde", "CONECTOR VERDE"],
+  ["conAzul", "CONECTOR AZUL"],
+  ["metrosDrop", "METROS DE DROP"],
+  ["esticadores", "ESTICADORES"],
+  ["fixaFios", "FIXA FIOS"],
+  ["abracadeira", "ABRAÇADEIRA"],
+  ["alcasFibra", "ALÇAS PARA FIBRA DROP"],
+  ["fitaBap", "FITA ISOLANTE"],
+  ["metrosCabo5e", "METROS DE CABO 5E"],
+  ["rj45", "RJ 45"],
+  ["plaquetas", "PLAQUETAS DTEL"]
+];
+
+const APPS = [
+  ["appCentral", "CENTRAL DO ASSINANTE"],
+  ["appDtelPlay", "DTEL PLAY"],
+  ["appParamount", "MAPEAMENTO WIFIMAN"],
+  ["appStreamings", "STREAMINGS (Amazon, Disney, Apple Tv, HBO, GloboPlay)"],
+  ["appTeste", "TESTE DE VELOCIDADE"]
+];
+
+// Apps que já vêm marcados por padrão ao abrir o formulário
+const APPS_DEFAULT_CHECKED = ["appCentral", "appParamount", "appTeste"];
+
+// Opções exibidas quando "STREAMINGS" é marcado
+const STREAMING_OPCOES = ["AMAZON PRIME VIDEO", "DISNEY+", "APPLE TV", "HBO MAX", "GLOBOPLAY"];
+
+let selectedCat = "INSTALAÇÃO";
+
+// =====================================================================
+// EQUIPE FUSÃO - configuração
+// Para adicionar/remover itens, basta editar as listas abaixo.
+// Cada item de material é [id_unico, "RÓTULO EXIBIDO"].
+// =====================================================================
+
+// Categorias exibidas na Equipe Fusão (edite livremente esta lista)
+const FUSAO_CATEGORIAS = [
+  "TROCA DE POSTE",
+  "ROMPIMENTO DE FIBRA",
+  "FOGO",
+  "FURTO",
+  "AMPLIAÇÃO DE REDE",
+  "ESTRUTURA",
+  "ADEQUAÇÃO DE REDE"
+];
+
+// Tamanhos de FIBRA - ao marcar um, abre um campo de metragem
+// correspondente. Pode marcar mais de um ao mesmo tempo.
+const FUSAO_FIBRA_TAMANHOS = ["12FO", "24FO", "36FO", "48FO", "72FO", "144FO"];
+
+// Materiais simples (só marca/desmarca, sem quantidade nem sub-opção)
+const FUSAO_MATERIAIS_SIMPLES = [
+  ["f_plaqueta", "PLAQUETA"],
+  ["f_olhal",    "OLHAL"],
+  ["f_raquete",  "RAQUETE"],
+  ["f_caixa24",  "CAIXA DE EMENDA 24F"],
+  ["f_caixa44",  "CAIXA DE EMENDA 44F"],
+  ["f_cto",      "CTO"],
+  ["f_cdoi",     "CDOI"]
+];
+
+// Opções de razão para os splitters (edite se precisar de outras razões)
+const FUSAO_SPLITTER_RATIOS = ["1X2", "1X4", "1X8", "1X16", "1X32"];
+
+// Opções de tamanho para a alça
+const FUSAO_ALCA_TAMANHOS = ["12F", "24F", "36F", "48F", "72F", "144F"];
+
+let selectedFusaoCat = FUSAO_CATEGORIAS[0];
+
+// =====================================================================
+// Monta as listas suspensas de modelo e resolve o valor escolhido
+// =====================================================================
+function buildModelos(){
+  CAMPOS_MODELO.forEach(([id, lista])=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    sel.innerHTML =
+      `<option value="">SELECIONE</option>` +
+      lista.map(m=>`<option value="${m}">${m}</option>`).join('') +
+      `<option value="${OUTRO_MODELO}">${OUTRO_MODELO}</option>`;
+  });
+}
+
+// Retorna o modelo digitado/escolhido e mostra ou esconde o campo livre
+function modeloVal(id){
+  const sel = document.getElementById(id);
+  if(!sel) return "";
+  const wrap = document.getElementById(id + 'OutroWrap');
+  const isOutro = sel.value === OUTRO_MODELO;
+  if(wrap) wrap.style.display = isOutro ? 'block' : 'none';
+  if(isOutro){
+    const outro = document.getElementById(id + 'Outro');
+    return outro ? outro.value.trim() : "";
+  }
+  return sel.value;
+}
+
+function buildFusaoCatList(){
+  const wrap = document.getElementById('fusaoCatList');
+  wrap.innerHTML = FUSAO_CATEGORIAS.map(c => `
+    <label class="cat-opt${c===selectedFusaoCat?' active':''}" data-cat="${c}">
+      <input type="radio" name="fusaoCategoria" value="${c}" ${c===selectedFusaoCat?'checked':''}>
+      ${c}
+    </label>
+  `).join('');
+  wrap.querySelectorAll('.cat-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedFusaoCat = el.dataset.cat;
+      wrap.querySelectorAll('.cat-opt').forEach(o=>o.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    });
+  });
+}
+
+function buildFusaoFibra(){
+  const optsWrap = document.getElementById('fusaoFibraOpts');
+  optsWrap.innerHTML = FUSAO_FIBRA_TAMANHOS.map(t=>`
+    <label><input type="checkbox" class="f-fibra-opt" id="f_fibra_${t}_chk" value="${t}"> ${t}</label>
+  `).join('');
+
+  const metWrap = document.getElementById('fusaoFibraMetragens');
+  metWrap.innerHTML = FUSAO_FIBRA_TAMANHOS.map(t=>`
+    <div class="mat-row" id="f_fibra_${t}_row" style="display:none">
+      <span>METRAGEM ${t}</span>
+      <input type="number" min="0" id="f_fibra_${t}_metros" placeholder="metros">
+    </div>
+  `).join('');
+
+  optsWrap.querySelectorAll('.f-fibra-opt').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const row = document.getElementById('f_fibra_'+cb.value+'_row');
+      row.style.display = cb.checked ? 'flex' : 'none';
+      if(!cb.checked){
+        document.getElementById('f_fibra_'+cb.value+'_metros').value = '';
+      }
+      render();
+    });
+  });
+}
+
+function buildFusaoMateriaisSimples(){
+  const wrap = document.getElementById('fusaoMateriaisSimples');
+  wrap.innerHTML = FUSAO_MATERIAIS_SIMPLES.map(([id,label])=>`
+    <div class="toggle-row">
+      <label><input type="checkbox" id="${id}"> ${label}</label>
+      <div class="sub-options" id="${id}_opts">
+        <label>QTD: <input type="number" min="0" id="${id}_qtd" style="width:70px"></label>
+      </div>
+    </div>
+  `).join('');
+
+  FUSAO_MATERIAIS_SIMPLES.forEach(([id])=>{
+    const cb = document.getElementById(id);
+    const opts = document.getElementById(id+'_opts');
+    cb.addEventListener('change', ()=>{
+      opts.style.display = cb.checked ? 'flex' : 'none';
+      if(!cb.checked){
+        document.getElementById(id+'_qtd').value = '';
+      }
+      render();
+    });
+  });
+}
+
+// Cria um grupo tipo "SPLITTER CONECTORIZADO" / "ALÇA": ao marcar o item
+// principal, abre as sub-opções (razão do splitter ou tamanho da alça),
+// que podem ter mais de uma marcada.
+function buildToggleGroup(containerId, enableId, label, options, optClass){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = `
+    <div class="toggle-row">
+      <label><input type="checkbox" id="${enableId}"> ${label}</label>
+      <div class="sub-options" id="${enableId}_opts">
+        ${options.map(o=>`
+          <div class="opt-qty">
+            <label><input type="checkbox" class="${optClass}" value="${o}" id="${enableId}_${o}_chk"> ${o}</label>
+            <input type="number" min="0" placeholder="qtd" id="${enableId}_${o}_qtd">
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  const enableEl = document.getElementById(enableId);
+  const optsEl = document.getElementById(enableId+'_opts');
+
+  options.forEach(o=>{
+    const optChk = document.getElementById(`${enableId}_${o}_chk`);
+    const optQty = document.getElementById(`${enableId}_${o}_qtd`);
+    optChk.addEventListener('change', ()=>{
+      optQty.style.display = optChk.checked ? 'inline-block' : 'none';
+      if(!optChk.checked){
+        optQty.value = '';
+      }
+      render();
+    });
+  });
+
+  enableEl.addEventListener('change', ()=>{
+    optsEl.style.display = enableEl.checked ? 'flex' : 'none';
+    if(!enableEl.checked){
+      optsEl.querySelectorAll('input[type=checkbox]').forEach(o=>o.checked=false);
+      optsEl.querySelectorAll('input[type=number]').forEach(q=>{ q.value=''; q.style.display='none'; });
+    }
+    render();
+  });
+}
+
+function buildFusaoForm(){
+  buildFusaoCatList();
+  buildFusaoFibra();
+  buildFusaoMateriaisSimples();
+  buildToggleGroup('fusaoSplitterCon', 'f_splitterCon', 'SPLITTER CONECTORIZADO', FUSAO_SPLITTER_RATIOS, 'f-splitterCon-opt');
+  buildToggleGroup('fusaoSplitterDes', 'f_splitterDes', 'SPLITTER DESCONECTORIZADO', FUSAO_SPLITTER_RATIOS, 'f-splitterDes-opt');
+  buildToggleGroup('fusaoAlca', 'f_alca', 'ALÇA', FUSAO_ALCA_TAMANHOS, 'f-alca-opt');
+}
+
+// Monta a linha de material da fusão: se houver quantidade, ela aparece
+// entre colchetes — ex: [323] SPLITTER CONECTORIZADO 1X4.
+// Sem quantidade informada, mantém o [X].
+function linhaMaterialFusao(label, quantidade){
+  return `[${quantidade !== "" ? quantidade : "X"}] ${label}`;
+}
+
+function renderFusao(){
+  const os = val('f_os');
+  const projetoCto = val('f_projetoCto');
+  const tecnico = val('f_tecnico');
+  const auxiliar = val('f_auxiliar');
+  const f_cidadeSel = val('f_cidade');
+  const f_cidadeOutra = val('f_cidadeOutra');
+  const cidade = f_cidadeSel === 'Outra' ? f_cidadeOutra : f_cidadeSel;
+  document.getElementById('f_cidadeOutraWrap').style.display = f_cidadeSel === 'Outra' ? 'block' : 'none';
+  const obs = val('f_obs');
+  const dbm = document.getElementById('f_dbm').value;
+
+  document.getElementById('f_dbmValue').textContent = `-${dbm} dBm`;
+
+  let matLinhas = [];
+
+  FUSAO_FIBRA_TAMANHOS.forEach(t=>{
+    const cb = document.getElementById('f_fibra_'+t+'_chk');
+    if(cb && cb.checked){
+      const m = qty(val('f_fibra_'+t+'_metros'));
+      matLinhas.push(linhaMaterialFusao(`FIBRA AS ${t}`, m));
+    }
+  });
+
+  FUSAO_MATERIAIS_SIMPLES.forEach(([id,label])=>{
+    if(document.getElementById(id).checked){
+      const q = qty(val(id+'_qtd'));
+      matLinhas.push(linhaMaterialFusao(label, q));
+    }
+  });
+
+  function linhasToggleGroup(enableId, label, optClass){
+    if(!document.getElementById(enableId).checked) return;
+    document.querySelectorAll('.'+optClass+':checked').forEach(o=>{
+      const q = qty(document.getElementById(o.id.replace('_chk','_qtd')).value.trim());
+      matLinhas.push(linhaMaterialFusao(`${label} ${o.value}`, q));
+    });
+  }
+  linhasToggleGroup('f_splitterCon', 'SPLITTER CONECTORIZADO', 'f-splitterCon-opt');
+  linhasToggleGroup('f_splitterDes', 'SPLITTER DESCONECTORIZADO', 'f-splitterDes-opt');
+  linhasToggleGroup('f_alca', 'ALÇA', 'f-alca-opt');
+
+  const matBlock = matLinhas.join('\n');
+  const auxiliarLinhaF = auxiliar ? `AUXILIAR: ${auxiliar}\n` : '';
+
+  const output = `CATEGORIA:
+
+[X] ${selectedFusaoCat}
+
+OS: ${ph(os)}
+PROJETO-CTO:${ph(projetoCto)}
+TÉCNICO: ${ph(tecnico)}
+${auxiliarLinhaF}CIDADE: ${ph(cidade)}
+OBS: ${ph(obs)}
+
+MATERIAL UTILIZADO:
+${matBlock}
+
+SINAL DA CAIXA: -${dbm} dBm`;
+
+  document.getElementById('output').textContent = output;
+}
+
+function buildCatList(){
+  const wrap = document.getElementById('catList');
+  wrap.innerHTML = CATEGORIAS.map(c => `
+    <label class="cat-opt${c===selectedCat?' active':''}" data-cat="${c}">
+      <input type="radio" name="categoria" value="${c}" ${c===selectedCat?'checked':''}>
+      ${c}
+    </label>
+  `).join('');
+  wrap.querySelectorAll('.cat-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedCat = el.dataset.cat;
+      wrap.querySelectorAll('.cat-opt').forEach(o=>o.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    });
+  });
+}
+
+function buildMateriais(){
+  const wrap = document.getElementById('materiais');
+  wrap.innerHTML = MATERIAIS.map(([id,label])=>`
+    <div class="mat-row">
+      <span>${label}</span>
+      <input type="number" min="0" id="${id}" value="">
+    </div>
+  `).join('');
+}
+
+function buildApps(){
+  const wrap = document.getElementById('appsRow');
+  wrap.innerHTML = APPS
+    .filter(([id]) => id !== 'appStreamings')
+    .map(([id,label])=>{
+      const checked = APPS_DEFAULT_CHECKED.includes(id) ? 'checked' : '';
+      return `<label><input type="checkbox" id="${id}" ${checked}> ${label}</label>`;
+    }).join('');
+
+  // STREAMINGS - ao marcar, abre a lista de plataformas instaladas
+  const streamWrap = document.getElementById('appStreamingsWrap');
+  const streamLabel = APPS.find(([id]) => id === 'appStreamings')[1];
+  streamWrap.innerHTML = `
+    <div class="toggle-row">
+      <label><input type="checkbox" id="appStreamings"> ${streamLabel}</label>
+      <div class="sub-options" id="appStreamings_opts">
+        ${STREAMING_OPCOES.map(o=>`<label><input type="checkbox" class="streaming-opt" value="${o}"> ${o}</label>`).join('')}
+      </div>
+    </div>
+  `;
+  const streamChk = document.getElementById('appStreamings');
+  const streamOpts = document.getElementById('appStreamings_opts');
+  streamChk.addEventListener('change', ()=>{
+    streamOpts.style.display = streamChk.checked ? 'flex' : 'none';
+    if(!streamChk.checked){
+      streamOpts.querySelectorAll('input[type=checkbox]').forEach(o=>o.checked=false);
+    }
+    render();
+  });
+}
+
+function val(id){ return document.getElementById(id).value.trim(); }
+function ph(v, fallback=""){ return v ? v : fallback; }
+function chk(cond){ return cond ? "X" : " "; }
+function qty(v){ return v && Number(v) > 0 ? v : ""; }
+
+function render(){
+  if(equipeAtual === 'fusao'){ renderFusao(); return; }
+
+  const isRetirada = selectedCat === 'RETIRADA';
+
+  document.getElementById('secIdentificacao').style.display = isRetirada ? 'none' : '';
+  document.getElementById('secEquipamentos').style.display = isRetirada ? 'none' : '';
+  document.getElementById('secRede').style.display = isRetirada ? 'none' : '';
+  document.getElementById('secMateriais').style.display = isRetirada ? 'none' : '';
+  document.getElementById('secContratoApps').style.display = isRetirada ? 'none' : '';
+  document.getElementById('secRetirada').style.display = isRetirada ? '' : 'none';
+
+  if(isRetirada){
+    const retOs = val('ret_os');
+    const retNome = val('ret_nome');
+    const retModeloOnu = modeloVal('ret_modeloOnu');
+    const retPon = val('ret_pon');
+    const retRoteador = modeloVal('ret_roteador');
+    const retSerial = val('ret_serial');
+    const retQntPlaqueta = qty(val('ret_qntPlaqueta'));
+    const retQntEsticador = qty(val('ret_qntEsticador'));
+    const retQntDrop = qty(val('ret_qntDrop'));
+    const retQntConVerde = qty(val('ret_qntConVerde'));
+    const retQntConAzul = qty(val('ret_qntConAzul'));
+    const retObs = val('ret_obs');
+    const retTecnico = val('ret_tecnico');
+    const retAuxiliar = val('ret_auxiliar');
+    const retCidade = val('ret_cidade');
+    const retAuxiliarLinha = retAuxiliar ? `*AUXILIAR:* ${retAuxiliar}\n` : '';
+
+    const output = `*RETIRADA CONCLUÍDA*
+
+*O.S:* ${ph(retOs)}
+*NOME:* ${ph(retNome)}
+*MODELO DA ONU:* ${ph(retModeloOnu)}
+*PON:* ${ph(retPon)}
+*ROTEADOR:* ${ph(retRoteador)}
+*SERIAL:* ${ph(retSerial)}
+*QNT.PLAQUETA:* ${ph(retQntPlaqueta)}
+*QNT. ESTICADOR:* ${ph(retQntEsticador)}
+*QNT. DROP:* ${ph(retQntDrop)}
+*QNT. CONECTOR VERDE:* ${ph(retQntConVerde)}
+*QNT. CONECTOR AZUL:* ${ph(retQntConAzul)}
+*OBS:* ${ph(retObs)}
+*TÉCNICO:* ${ph(retTecnico)}
+${retAuxiliarLinha}*CIDADE:* ${ph(retCidade)}`;
+
+    document.getElementById('output').textContent = output;
+    return;
+  }
+
+  const os = val('os');
+  const cliente = val('cliente');
+  const cidadeSel = val('cidade');
+  const cidadeOutra = val('cidadeOutra');
+  const cidade = cidadeSel === 'Outra' ? cidadeOutra : cidadeSel;
+  document.getElementById('cidadeOutraWrap').style.display = cidadeSel === 'Outra' ? 'block' : 'none';
+  const tecnico = val('tecnico');
+  const auxiliar = val('auxiliar');
+  const onuAntiga = modeloVal('onuAntiga');
+  const ponOnuAntiga = val('ponOnuAntiga');
+  const roteadorAntigo = modeloVal('roteadorAntigo');
+  const snRoteadorAntigo = val('snRoteadorAntigo');
+  const onu = modeloVal('onu');
+  const ponOnu = val('ponOnu');
+  const roteador = modeloVal('roteador');
+  const ponRot = val('ponRot');
+  const cto = val('cto');
+  const porta=document.getElementById('porta').value;
+  const wifiSufixo = val('wifiSufixo');
+  const wifi = 'DTEL_' + wifiSufixo.toUpperCase();
+  const senha = val('senha');
+  const obs = val('obs');
+  const conectados = val('conectados');
+  const descricaoServico = val('descricaoServico') || 'DESCRIÇÃO DO SERVIÇO';
+
+  const contrato = document.querySelector('input[name=contrato]:checked').value;
+  const ponto = document.querySelector('input[name=ponto]:checked').value;
+  const contratoMotivo = val('contratoMotivo');
+  const pontoMotivo = val('pontoMotivo');
+  const dbmJust=val('dbmJust');
+ document.getElementById('dbmJustWrap').style.display=Number(porta)>=25?'block':'none';
+
+  document.getElementById('contratoMotivoWrap').style.display = contrato==='nao' ? 'block':'none';
+  document.getElementById('pontoMotivoWrap').style.display = ponto==='nao' ? 'block':'none';
+
+  const isInstalacao = selectedCat === 'INSTALAÇÃO';
+  document.getElementById('equipAntigoWrap').style.display = isInstalacao ? 'none' : '';
+
+  let catBlock = selectedCat;
+
+  let matBlock = MATERIAIS
+    .filter(([id]) => qty(val(id)) !== "")
+    .map(([id,label])=>{
+      const q = qty(val(id));
+      return `[${q}] ${label}`;
+    }).join('\n');
+
+  let appsBlock = APPS.map(([id,label])=>{
+    const checked = document.getElementById(id).checked;
+    let linha = `[${chk(checked)}] ${label}`;
+    if(id === 'appStreamings' && checked){
+      const selecionados = Array.from(document.querySelectorAll('.streaming-opt:checked')).map(o=>o.value);
+      if(selecionados.length){
+        linha += ` - ${selecionados.join(', ')}`;
+      }
+    }
+    return linha;
+  }).join('\n');
+
+  const SEP = '';
+
+  const equipAntigoBlock = isInstalacao ? '' : `ONU ANTIGA: ${ph(onuAntiga)}
+PON: ${ph(ponOnuAntiga)}
+ROTEADOR ANTIGO: ${ph(roteadorAntigo)}
+SN: ${ph(snRoteadorAntigo)}
+${SEP}
+`;
+  const auxiliarLinha = auxiliar ? `AUXILIAR: ${auxiliar}\n` : '';
+
+  const output = `${descricaoServico}
+CATEGORIA:
+${catBlock}
+${SEP}
+OS: ${ph(os)}
+CLIENTE: ${ph(cliente)}
+CIDADE: ${ph(cidade)}
+
+${equipAntigoBlock}ONU NOVA: ${ph(onu)}
+PON:${ph(ponOnu)}
+ROTEADOR NOVO: ${ph(roteador)}
+SN: ${ph(ponRot)}
+${SEP}
+CTO: ${ph(cto)}
+DBM: -${ph(porta)} dBm${Number(porta)>=25?`\nJUSTIFICATIVA DBM: ${ph(dbmJust)}`:''}\n[ ${chk(document.getElementById('ipv').checked)} ] IPV6 e IPV4\n[ ${chk(document.getElementById('remoto').checked)} ] ACESSO REMOTO ATIVO
+${SEP}
+REDE WIFI:${ph(wifi)}
+SENHA:${ph(senha)}
+${SEP}
+TÉCNICO: ${ph(tecnico)}
+${auxiliarLinha}OBS: ${ph(obs)}
+${SEP}
+LISTA DE MATERIAIS UTILIZADOS:
+${matBlock}
+${SEP}
+CONTRATO E APLICATIVOS
+CONTRATO ASSINADO: [ ${chk(contrato==='sim')} ] SIM [ ${chk(contrato==='nao')} ] NÃO
+SE NÃO, PORQUÊ: ${contrato==='nao' ? ph(contratoMotivo) : ''}
+PONTO DE REDE: [ ${chk(ponto==='sim')} ] SIM [ ${chk(ponto==='nao')} ] NÃO
+SE NÃO, PORQUÊ: ${ponto==='nao' ? ph(pontoMotivo) : ''}
+${SEP}
+APPS INSTALADOS NO CLIENTE
+${appsBlock}
+CONECTADOS: ${ph(conectados,'')}`;
+
+  document.getElementById('output').textContent = output;
+}
+
+function copyToClipboard(text){
+  return new Promise((resolve)=>{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>resolve(true)).catch(()=>resolve(fallbackCopy(text)));
+    } else {
+      resolve(fallbackCopy(text));
+    }
+  });
+}
+
+function fallbackCopy(text){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '-9999px';
+    ta.setAttribute('readonly', '');
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){
+    return false;
+  }
+}
+
+function copyOutput(){
+  const text = document.getElementById('output').textContent;
+  const btn = document.getElementById('copyBtn');
+  const original = btn.textContent;
+  copyToClipboard(text).then((ok)=>{
+    btn.textContent = ok ? 'COPIADO ✓' : 'TOQUE E SEGURE PRA COPIAR';
+    btn.classList.toggle('copied', ok);
+    setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+buildCatList();
+buildMateriais();
+buildApps();
+buildModelos();
+buildFusaoForm();
+
+// Rede Wi-Fi: mantém sempre em maiúsculo o que o técnico digita após "DTEL_"
+const wifiSufixoEl = document.getElementById('wifiSufixo');
+if(wifiSufixoEl){
+  wifiSufixoEl.addEventListener('input', function(){
+    const pos = this.selectionStart;
+    this.value = this.value.toUpperCase();
+    this.setSelectionRange(pos, pos);
+  });
+}
+
+// Campos de "OUTRO MODELO": mantém em maiúsculo, igual aos demais campos
+CAMPOS_MODELO.forEach(([id])=>{
+  const el = document.getElementById(id + 'Outro');
+  if(!el) return;
+  el.addEventListener('input', function(){
+    const pos = this.selectionStart;
+    this.value = this.value.toUpperCase();
+    this.setSelectionRange(pos, pos);
+  });
+});
+
+setTimeout(()=>{const s=document.getElementById('porta');const v=document.getElementById('dbmValue');const u=()=>v.textContent='-'+s.value+' dBm';s.addEventListener('input',u);u();},0);
+
+let equipeAtual = 'padrao';
+document.querySelectorAll('#equipeToggle .equipe-opt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    equipeAtual = el.dataset.equipe;
+    document.querySelectorAll('#equipeToggle .equipe-opt').forEach(o=>o.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('formPadrao').style.display = equipeAtual === 'padrao' ? '' : 'none';
+    document.getElementById('formFusao').style.display = equipeAtual === 'fusao' ? '' : 'none';
+    render();
+  });
+});
+
+document.querySelectorAll('input, textarea, select').forEach(el=>{
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+</script>
+
+<button id="mobileCopy" onclick="copyOutput()" style="position:fixed;left:12px;right:12px;bottom:12px;height:58px;border:none;border-radius:16px;background:#00c2a8;font-weight:bold;z-index:999">COPIAR SCRIPT</button></body>
+</html>
